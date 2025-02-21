@@ -1,11 +1,12 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-    content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
-    ],
+module.exports = {
+    content: ["./src/**/*.{js,jsx,ts,tsx}"], // Ensures Tailwind works with all JSX files
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                padauk: ['Padauk', 'sans-serif'], // Registering Padauk
+            },
+        },
     },
     plugins: [],
 };

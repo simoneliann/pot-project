@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -18,10 +18,16 @@ const customIcon = new L.Icon({
 const MAPTILER_API_KEY = process.env.REACT_APP_MAPTILER_API_KEY;
 
 const LandingPage = () => {
-    const [selectedEvent, setSelectedEvent] = useState(null);
     const position = [29.7604, -95.3698]; // Houston, TX
+    const [selectedEvent, setSelectedEvent] = useState(null);
 
-    // Dummy data for tracking officers & events
+    // Simulated officer tracking data
+    const [officers, setOfficers] = useState([
+        { id: 1, name: "Officer A", location: [29.75, -95.36] },
+        { id: 2, name: "Officer B", location: [29.77, -95.35] },
+        { id: 3, name: "Officer C", location: [29.76, -95.38] },
+    ]);
+
     const officerTickets = {
         unfinished: [
             { id: 1, title: "Ongoing Robbery", location: [29.75, -95.36] },
@@ -37,17 +43,33 @@ const LandingPage = () => {
         { id: 5, title: "Fire Emergency", location: [29.78, -95.37] },
     ];
 
-    return (
-        <div className="grid grid-cols-3 gap-2 h-screen p-4 bg-gray-100">
+    // Simulate real-time officer movement
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setOfficers((prevOfficers) =>
+                prevOfficers.map((officer) => ({
+                    ...officer,
+                    location: [
+                        officer.location[0] + (Math.random() - 0.5) * 0.005,
+                        officer.location[1] + (Math.random() - 0.5) * 0.005,
+                    ],
+                }))
+            );
+        }, 5000);
 
-            {/* Left Panel: Officer's Tickets */}
-            <div className="bg-white p-4 shadow-md rounded-lg flex flex-col">
-                <h2 className="text-lg font-semibold">Unfinished Tickets</h2>
-                <ul className="mt-2">
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 flex font-padauk">
+            {/* Left Panel */}
+            <div className="w-[17.5%] p-6 bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-lg flex flex-col space-y-4">
+                <h2 className="text-2xl font-medium text-gray-200">Unfinished Tickets</h2>
+                <ul className="space-y-2">
                     {officerTickets.unfinished.map((ticket) => (
                         <li
                             key={ticket.id}
-                            className="cursor-pointer p-2 bg-yellow-200 mb-2 rounded"
+                            className="cursor-pointer p-3 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 transition font-normal"
                             onClick={() => setSelectedEvent(ticket)}
                         >
                             {ticket.title}
@@ -55,24 +77,24 @@ const LandingPage = () => {
                     ))}
                 </ul>
 
-                <h2 className="text-lg font-semibold mt-4">Finished Tickets</h2>
-                <ul className="mt-2">
+                <h2 className="text-2xl font-semibold text-gray-200 mt-6">Finished Tickets</h2>
+                <ul className="space-y-2">
                     {officerTickets.finished.map((ticket) => (
-                        <li key={ticket.id} className="p-2 bg-green-200 mb-2 rounded">
+                        <li key={ticket.id} className="p-3 rounded-lg bg-green-500/20 font-light">
                             {ticket.title}
                         </li>
                     ))}
                 </ul>
             </div>
 
-            {/* Middle Panel: Recent Events */}
-            <div className="bg-white p-4 shadow-md rounded-lg flex flex-col">
-                <h2 className="text-lg font-semibold">Recent Events</h2>
-                <ul className="mt-2">
+            {/* Middle Panel */}
+            <div className="w-[17.5%] p-6 bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-lg flex flex-col space-y-4 mx-4">
+                <h2 className="text-2xl font-bold text-gray-200">Recent Events</h2>
+                <ul className="space-y-2">
                     {recentEvents.map((event) => (
                         <li
                             key={event.id}
-                            className="cursor-pointer p-2 bg-red-200 mb-2 rounded"
+                            className="cursor-pointer p-3 rounded-lg bg-red-500/20 hover:bg-red-500/40 transition font-medium"
                             onClick={() => setSelectedEvent(event)}
                         >
                             {event.title}
@@ -81,24 +103,41 @@ const LandingPage = () => {
                 </ul>
             </div>
 
-            {/* Right Panel: Live Map */}
-            <div className="bg-white p-4 shadow-md rounded-lg relative">
-                <h2 className="text-lg font-semibold">Live Tracking</h2>
-                <MapContainer center={position} zoom={13} className="w-full h-full rounded-lg">
-                    <TileLayer
-                        url={`https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}`}
-                        attribution='&copy; MapTiler contributors'
-                    />
-                    {selectedEvent && (
-                        <Marker position={selectedEvent.location} icon={customIcon}>
-                            <Popup>{selectedEvent.title}</Popup>
-                        </Marker>
-                    )}
-                </MapContainer>
-            </div>
+            {/* Map Panel */}
+            <div className="w-[65%] bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-lg p-6 relative">
+                <h2 className="text-2xl font-medium text-gray-200">Live Tracking</h2>
+                <div className="rounded-lg overflow-hidden h-full">
+                    <MapContainer center={position} zoom={13} className="w-full h-full">
+                        <TileLayer
+                            url={`https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}`}
+                            attribution='&copy; MapTiler contributors'
+                        />
 
+                        {/* Officer Markers (Live Tracking) */}
+                        {officers.map((officer) => (
+                            <Marker key={officer.id} position={officer.location} icon={customIcon}>
+                                <Popup>{officer.name}</Popup>
+                            </Marker>
+                        ))}
+
+                        {/* Event Markers (Static) */}
+                        {recentEvents.map((event) => (
+                            <Marker key={event.id} position={event.location} icon={customIcon}>
+                                <Popup>{event.title}</Popup>
+                            </Marker>
+                        ))}
+
+                        {/* Selected Ticket/Event Marker */}
+                        {selectedEvent && (
+                            <Marker position={selectedEvent.location} icon={customIcon}>
+                                <Popup>{selectedEvent.title}</Popup>
+                            </Marker>
+                        )}
+                    </MapContainer>
+                </div>
+            </div>
         </div>
     );
 };
 
-export default LandingPage; // Ensure default export
+export default LandingPage;
